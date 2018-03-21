@@ -2,6 +2,7 @@ package com.example.webfluxdemo.controller;
 
 import com.example.webfluxdemo.model.Person;
 import com.example.webfluxdemo.repository.MongoRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @RestController
+@Slf4j
 public class PersonController
 {
     private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
@@ -30,10 +32,10 @@ public class PersonController
     public Flux<Person> getPersonsByStringNumber(@RequestParam Set<String> numbers)
     {
         return Flux.fromIterable(numbers)
-                   .flatMap(number -> reactiveRedisTemplate.opsForValue().get(number))
+                   .flatMap(number -> reactiveRedisTemplate.opsForValue().get(number).doOnNext(log::info))
                    .filter(Objects::nonNull)
                    .map(Integer::valueOf)
-                   .flatMap(id -> mongoRepository.findById(id))
+                   .flatMap(id -> mongoRepository.findById(id).doOnNext(person -> log.info(person.toString())))
                    .switchIfEmpty(Mono.error(new IllegalArgumentException("Not found person.")));
     }
 
