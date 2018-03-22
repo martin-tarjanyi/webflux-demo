@@ -45,6 +45,13 @@ public class PersonController
         return mongoRepository.findAll().delayElements(Duration.ofMillis(1000));
     }
 
+    @GetMapping("/slow")
+    public Mono<String> slowEndpoint()
+    {
+        return Mono.delay(Duration.ofSeconds(3))
+                   .then(Mono.just(Thread.currentThread().getName()));
+    }
+
     @ResponseBody
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<?> response()
