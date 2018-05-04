@@ -7,7 +7,10 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -28,6 +31,14 @@ public class PersonController
         this.mongoRepository = mongoRepository;
     }
 
+    @GetMapping(value = "/slow")
+    public Mono<String> slow()
+    {
+        return Mono.just("Sloow response...")
+                   .delayElement(Duration.ofSeconds(3))
+                   .doOnNext(__ -> log.info("Request executed..."));
+    }
+
     @GetMapping("/people")
     public Flux<Person> getPersonsByStringNumber(@RequestParam Set<String> numbers)
     {
@@ -45,18 +56,9 @@ public class PersonController
         return mongoRepository.findAll().delayElements(Duration.ofMillis(1000));
     }
 
-    @GetMapping(value = "/slow")
-    public Mono<String> slow()
-    {
-        return Mono.just("Slooooow response...")
-                   .delayElement(Duration.ofSeconds(3))
-                   .doOnNext(__ -> log.info("Request executed..."));
-    }
-
-    @ResponseBody
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<?> response()
+    public ResponseEntity<?> response(IllegalArgumentException e)
     {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 }
