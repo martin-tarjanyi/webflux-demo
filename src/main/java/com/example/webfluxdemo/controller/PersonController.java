@@ -15,7 +15,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.Objects;
 import java.util.Set;
 
 @RestController
@@ -44,7 +43,6 @@ public class PersonController
     {
         return Flux.fromIterable(numbers)
                    .flatMap(number -> reactiveRedisTemplate.opsForValue().get(number).doOnNext(log::info))
-                   .filter(Objects::nonNull)
                    .map(Integer::valueOf)
                    .flatMap(id -> mongoRepository.findById(id).doOnNext(person -> log.info(person.toString())))
                    .switchIfEmpty(Mono.error(new IllegalArgumentException("Not found person.")));
