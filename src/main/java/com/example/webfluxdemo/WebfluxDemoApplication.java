@@ -1,7 +1,7 @@
 package com.example.webfluxdemo;
 
 import com.example.webfluxdemo.model.Person;
-import com.example.webfluxdemo.repository.MongoRepository;
+import com.example.webfluxdemo.repository.ReactiveMongoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -45,11 +45,11 @@ public class WebfluxDemoApplication
     }
 
     @Bean
-    public CommandLineRunner savePeopleToMongo(MongoRepository mongoRepository)
+    public CommandLineRunner savePeopleToMongo(ReactiveMongoRepository reactiveMongoRepository)
     {
         return args ->
         {
-            mongoRepository.deleteAll().thenMany(mongoRepository.saveAll(Set.of(
+            reactiveMongoRepository.deleteAll().thenMany(reactiveMongoRepository.saveAll(Set.of(
                                            new Person(1, "Jack", 45, "Oklahoma"),
                                            new Person(2, "John", 24, "Chicago"),
                                            new Person(6, "Smith", 11, "London"),
@@ -57,7 +57,7 @@ public class WebfluxDemoApplication
                                            new Person(7, "Alexander", 44, "Amsterdam"),
                                            new Person(3, "Jane", 32, "Brian"),
                                            new Person(4, "Brian", 48, "New York"))))
-                           .subscribe(person -> log.info("Saved person: " + person));
+                                   .subscribe(person -> log.info("Saved person: " + person));
         };
     }
 

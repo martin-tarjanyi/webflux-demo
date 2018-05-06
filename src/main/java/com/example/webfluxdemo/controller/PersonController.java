@@ -1,7 +1,7 @@
 package com.example.webfluxdemo.controller;
 
 import com.example.webfluxdemo.model.Person;
-import com.example.webfluxdemo.repository.MongoRepository;
+import com.example.webfluxdemo.repository.ReactiveMongoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -22,12 +22,12 @@ import java.util.Set;
 public class PersonController
 {
     private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
-    private final MongoRepository mongoRepository;
+    private final ReactiveMongoRepository reactiveMongoRepository;
 
-    public PersonController(ReactiveRedisTemplate<String, String> reactiveRedisTemplate, MongoRepository mongoRepository)
+    public PersonController(ReactiveRedisTemplate<String, String> reactiveRedisTemplate, ReactiveMongoRepository reactiveMongoRepository)
     {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
-        this.mongoRepository = mongoRepository;
+        this.reactiveMongoRepository = reactiveMongoRepository;
     }
 
     @GetMapping(value = "/slow")
@@ -44,14 +44,14 @@ public class PersonController
         return Flux.fromIterable(numbers)
                    .flatMap(number -> reactiveRedisTemplate.opsForValue().get(number).doOnNext(log::info))
                    .map(Integer::valueOf)
-                   .flatMap(id -> mongoRepository.findById(id).doOnNext(person -> log.info(person.toString())))
+                   .flatMap(id -> reactiveMongoRepository.findById(id).doOnNext(person -> log.info(person.toString())))
                    .switchIfEmpty(Mono.error(new IllegalArgumentException("Not found person.")));
     }
 
-    @GetMapping(value = "/people-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/people-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE) // Server Sent Events (SSE)
     public Flux<Person> getAllAsStream()
     {
-        return mongoRepository.findAll().delayElements(Duration.ofMillis(1000));
+        return reactiveMongoRepository.findAll().delayElements(Duration.ofMillis(1000));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
