@@ -42,9 +42,9 @@ public class PersonController
     public Flux<Person> getPersonsByStringNumber(@RequestParam Set<String> numbers)
     {
         return Flux.fromIterable(numbers)
-                   .flatMap(number -> reactiveRedisTemplate.opsForValue().get(number).doOnNext(log::info))
+                   .flatMap(number -> reactiveRedisTemplate.opsForValue().get(number).doOnNext(value -> log.info("Redis value: " + value)))
                    .map(Integer::valueOf)
-                   .flatMap(id -> reactiveMongoRepository.findById(id).doOnNext(person -> log.info(person.toString())))
+                   .flatMap(id -> reactiveMongoRepository.findById(id).doOnNext(person -> log.info("Mongo result: " + person.toString())))
                    .switchIfEmpty(Mono.error(new IllegalArgumentException("Not found person.")));
     }
 
